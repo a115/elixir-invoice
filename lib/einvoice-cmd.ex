@@ -24,7 +24,8 @@ defmodule Einvoice.CMD do
   end
 
   def display_line(description, unit_price, qty, l_total) do
-    IO.puts "#{description} \t#{unit_price} \t#{qty} \t#{l_total}"
+    [description_s, unit_price_s, qty_s, l_total_s] = :io_lib.format("~30.. s~10.2. f~10.2. f~10.2. f", [description, unit_price, qty, l_total])
+    IO.puts "#{description_s} \t#{unit_price_s} \t#{qty_s} \t#{l_total_s}"
     l_total
   end
 
@@ -37,10 +38,12 @@ defmodule Einvoice.CMD do
   end
 
   def display_totals(amount, vat, total) do
-    IO.puts "--------------------------------------"
-    IO.puts "\tAmount: \t#{amount}"
-    IO.puts "\tVAT (20%): \t#{vat}\n"
-    IO.puts "\tTOTAL: \t#{total}"
+    [amount_l, vat_l, total_l] = :io_lib.format("~30.. s~30.. s~30.. s", ["Amount:", "VAT (20%):", "TOTAL:"])
+    [amount_s, vat_s, total_s] = :io_lib.format("~42.2. f~42.2. f~42.2. f", [amount, vat, total])
+    IO.puts String.duplicate("-", 74)
+    IO.puts "#{amount_l}\t#{amount_s}"
+    IO.puts "#{vat_l}\t#{vat_s}\n"
+    IO.puts "#{total_l}\t#{total_s}"
   end
 
   def process([:read_file, file]) do
