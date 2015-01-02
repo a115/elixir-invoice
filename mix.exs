@@ -5,7 +5,12 @@ defmodule Einvoice.Mixfile do
     [app: :einvoice,
      version: "0.0.1",
      elixir: "~> 1.0",
-     deps: deps]
+     deps: deps,
+     escript: escript]
+  end
+
+  def escript do
+    [main_module: Einvoice.CMD]
   end
 
   # Configuration for the OTP application
