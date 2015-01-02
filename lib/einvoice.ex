@@ -1,0 +1,2 @@
+defmodule Einvoice do
+end
