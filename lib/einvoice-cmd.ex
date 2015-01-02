@@ -29,10 +29,10 @@ defmodule Einvoice.CMD do
     l_total
   end
 
-  def process_lines([]), do: 0
+  def process_lines([]), do: 0.0
   def process_lines([head|tail]) do
     case parse_line(head) do
-      [:empty_line, _, _] -> 0
+      [:empty_line, _, _] -> 0.0
       [description, unit_price, qty] -> display_line(description, unit_price, qty, line_total(unit_price, qty))
     end + process_lines(tail)
   end
