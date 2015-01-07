@@ -5,11 +5,12 @@ defmodule Einvoice.CMD do
 
   def parse_args(args) do
     options = OptionParser.parse(args, 
-                                  switches: [help: :boolean, input_file: :string], 
+                                  switches: [help: :boolean, input_file: :string, vat: :float], 
                                   aliases: [h: :help, i: :input_file])
     case options do
       {[help: true], _, _} -> :help
       {[input_file: file], _, _} -> [:read_file, file]
+      {[vat: vat], _, _} -> [:set_vat, vat |> input_to_number]
       {_, [amount], _} -> [amount |> input_to_number, 20.0]
       {_, [amount, vat], _} -> [amount |> input_to_number, vat |> input_to_number]
       _ -> :help

@@ -57,8 +57,7 @@ defmodule EinvoiceTest do
 
   test "line_total returns correct total for non-zero quantity and unit price" do
     # Can't check exactly because actual result is 45.599999999999994 for some reason
-    assert line_total(15.2, 3) >= 45.59
-    assert line_total(15.2, 3) <= 45.60
+    assert_in_delta line_total(15.2, 3), 45.6, 0.0001
   end
 
 end
