@@ -3,6 +3,8 @@ defmodule Einvoice.CMD do
   import Einvoice
   import MultiDef
 
+  @default_vat 20
+
   defp parse_options(args), do: args |> OptionParser.parse(
                                   switches: [help: :boolean, input_file: :string, vat: :float], 
                                   aliases: [h: :help, i: :input_file])
@@ -11,11 +13,11 @@ defmodule Einvoice.CMD do
     {[help: true], _, _} -> :help
     {[input_file: file], _, _} -> [:read_file, file]
     {[vat: vat], _, _} -> [:set_vat, vat |> to_number]
-    {_, [amount], _} -> [amount |> to_number, 20.0]
+    {_, [amount], _} -> [amount |> to_number, @default_vat]
     {_, [amount, vat], _} -> [amount |> to_number, vat |> to_number]
     _ -> :help
   end
-  
+
   def parse_args(args), do: args |> parse_options |> _parse_args
 
   defp parse_line([description, unit_price, qty]), do: [description, to_number(unit_price), to_number(qty)]
@@ -34,7 +36,7 @@ defmodule Einvoice.CMD do
   defp process_lines([head|tail], acc), do: process_lines(tail, head |> split_line |> parse_line |> process_line |> +(acc))
 
   defp display_totals(amount, vat, total) do
-    [amount_l, vat_l, total_l] = :io_lib.format("~30.. s~30.. s~30.. s", ["Amount:", "VAT (20%):", "TOTAL:"])
+    [amount_l, vat_l, total_l] = :io_lib.format("~30.. s~30.. s~30.. s", ["Amount:", "VAT (#{@default_vat}%):", "TOTAL:"])
     [amount_s, vat_s, total_s] = :io_lib.format("~42.2. f~42.2. f~42.2. f", [amount, vat, total])
     IO.puts String.duplicate("-", 74)
     IO.puts "#{amount_l}\t#{amount_s}"
