@@ -4,18 +4,18 @@ defmodule Einvoice.CMD do
   import MultiDef
 
   @default_vat 20
+  @default_options %{ :vat => @default_vat, 
+                      :input_file => nil }
 
   defp parse_options(args), do: args |> OptionParser.parse(
                                   switches: [help: :boolean, input_file: :string, vat: :float], 
                                   aliases: [h: :help, i: :input_file])
 
   mdef _parse_args do
-    {[help: true], _, _} -> :help
-    {[input_file: file], _, _} -> [:read_file, file]
-    {[vat: vat], _, _} -> [:set_vat, vat |> to_number]
-    {_, [amount], _} -> [amount |> to_number, @default_vat]
-    {_, [amount, vat], _} -> [amount |> to_number, vat |> to_number]
-    _ -> :help
+    {[help: true], _, _}  -> :help
+    {[], [], []}          -> :help
+    {[], args, []}        -> { @default_options, args}
+    {opts, args, []}      -> { Enum.into(opts, @default_options), args }
   end
 
   def parse_args(args), do: args |> parse_options |> _parse_args
@@ -35,8 +35,8 @@ defmodule Einvoice.CMD do
   defp process_lines([], acc), do: acc
   defp process_lines([head|tail], acc), do: process_lines(tail, head |> split_line |> parse_line |> process_line |> +(acc))
 
-  defp display_totals(amount, vat, total) do
-    [amount_l, vat_l, total_l] = :io_lib.format("~30.. s~30.. s~30.. s", ["Amount:", "VAT (#{@default_vat}%):", "TOTAL:"])
+  defp display_totals(amount, vat, vat_rate, total) do
+    [amount_l, vat_l, total_l] = :io_lib.format("~30.. s~30.. s~30.. s", ["Amount:", "VAT (#{vat_rate}%):", "TOTAL:"])
     [amount_s, vat_s, total_s] = :io_lib.format("~42.2. f~42.2. f~42.2. f", [amount, vat, total])
     IO.puts String.duplicate("-", 74)
     IO.puts "#{amount_l}\t#{amount_s}"
@@ -44,30 +44,33 @@ defmodule Einvoice.CMD do
     IO.puts "#{total_l}\t#{total_s}"
   end
 
-  def process([:read_file, file]) do
+  defp _process(nil, vat_rate, [amount]), do: IO.puts(add_vat(amount |> to_number, vat_rate))
+  defp _process(file, vat_rate, []) do
     amount = file |> File.read! 
                   |> String.split("\n") 
                   |> process_lines(0.0)
     File.close file
-    vat = calc_vat(amount)
+    vat = calc_vat(amount, vat_rate)
     total = amount + vat
-    display_totals(amount, vat, total)
+    display_totals(amount, vat, vat_rate, total)
     System.halt(0)
   end
-  def process([amount, vat]) do
-    IO.puts add_vat(amount, vat)
-  end
+
+  def process({options, args}), do: _process(options[:input_file], options[:vat] || @default_vat, args)
   def process(:help) do
     IO.puts """
       Usage:
-        einvoice amount [vat]
+        einvoice [amount]
 
       Options:
         -h, [--help]        # Show this help message and quit.
         -i, [--input_file]  # Create an invoice from supplied row data in CSV format. 
+        --vat               # Set the VAT rate (default is 20%)
+
 
       Description:
-        Calcualtes VAT for an invoice. 
+        If `amount` is specified, calcualtes and prints out the VAT on that amount. 
+        If an input CSV file is specified, reads the line entries and prints out an invoice. 
     """
     System.halt(0)
   end
@@ -77,4 +80,3 @@ defmodule Einvoice.CMD do
   end
  
 end
-
