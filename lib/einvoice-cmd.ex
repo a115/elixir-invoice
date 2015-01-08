@@ -1,6 +1,6 @@
 defmodule Einvoice.CMD do
+  import Eutils, only: [to_number: 1, split_line: 1]
   import Einvoice
-  import Eutils, only: [input_to_number: 1, split_line: 1]
 
   def parse_args(args) do
     options = OptionParser.parse(args, 
@@ -9,14 +9,14 @@ defmodule Einvoice.CMD do
     case options do
       {[help: true], _, _} -> :help
       {[input_file: file], _, _} -> [:read_file, file]
-      {[vat: vat], _, _} -> [:set_vat, vat |> input_to_number]
-      {_, [amount], _} -> [amount |> input_to_number, 20.0]
-      {_, [amount, vat], _} -> [amount |> input_to_number, vat |> input_to_number]
+      {[vat: vat], _, _} -> [:set_vat, vat |> to_number]
+      {_, [amount], _} -> [amount |> to_number, 20.0]
+      {_, [amount, vat], _} -> [amount |> to_number, vat |> to_number]
       _ -> :help
     end
   end
 
-  defp parse_line([description, unit_price, qty]), do: [description, input_to_number(unit_price), input_to_number(qty)]
+  defp parse_line([description, unit_price, qty]), do: [description, to_number(unit_price), to_number(qty)]
   defp parse_line([_]), do: [:empty_line, 0, 0]
 
   defp display_line(description, unit_price, qty, l_total) do
