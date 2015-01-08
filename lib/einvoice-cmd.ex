@@ -1,7 +1,6 @@
 defmodule Einvoice.CMD do
   import Einvoice
-
-  def input_to_number(input), do: elem(Float.parse(String.strip(input)), 0)
+  import Eutils, only: [input_to_number: 1, split_line: 1]
 
   def parse_args(args) do
     options = OptionParser.parse(args, 
@@ -17,28 +16,22 @@ defmodule Einvoice.CMD do
     end
   end
 
-  def parse_line(line) do
-    case String.split(line, ",") do
-      [description, unit_price, qty] -> [description, input_to_number(unit_price), input_to_number(qty)]
-      [_] -> [:empty_line, 0, 0]
-    end
-  end
+  defp parse_line([description, unit_price, qty]), do: [description, input_to_number(unit_price), input_to_number(qty)]
+  defp parse_line([_]), do: [:empty_line, 0, 0]
 
-  def display_line(description, unit_price, qty, l_total) do
+  defp display_line(description, unit_price, qty, l_total) do
     [description_s, unit_price_s, qty_s, l_total_s] = :io_lib.format("~30.. s~10.2. f~10.2. f~10.2. f", [description, unit_price, qty, l_total])
     IO.puts "#{description_s} \t#{unit_price_s} \t#{qty_s} \t#{l_total_s}"
     l_total
   end
 
-  def process_lines([]), do: 0.0
-  def process_lines([head|tail]) do
-    case parse_line(head) do
-      [:empty_line, _, _] -> 0.0
-      [description, unit_price, qty] -> display_line(description, unit_price, qty, line_total(unit_price, qty))
-    end + process_lines(tail)
-  end
+  defp process_line([:empty_line, _, _]), do: 0.0
+  defp process_line([description, unit_price, qty]), do: display_line(description, unit_price, qty, line_total(unit_price, qty))
 
-  def display_totals(amount, vat, total) do
+  defp process_lines([], acc), do: acc
+  defp process_lines([head|tail], acc), do: process_lines(tail, head |> split_line |> parse_line |> process_line |> +(acc))
+
+  defp display_totals(amount, vat, total) do
     [amount_l, vat_l, total_l] = :io_lib.format("~30.. s~30.. s~30.. s", ["Amount:", "VAT (20%):", "TOTAL:"])
     [amount_s, vat_s, total_s] = :io_lib.format("~42.2. f~42.2. f~42.2. f", [amount, vat, total])
     IO.puts String.duplicate("-", 74)
@@ -50,7 +43,7 @@ defmodule Einvoice.CMD do
   def process([:read_file, file]) do
     amount = file |> File.read! 
                   |> String.split("\n") 
-                  |> process_lines
+                  |> process_lines(0.0)
     File.close file
     vat = calc_vat(amount)
     total = amount + vat
