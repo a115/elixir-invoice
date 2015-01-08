@@ -1,7 +1,10 @@
 defmodule Einvoice do
 
-  def add_up([]), do: 0
-  def add_up([head|tail]), do: head + add_up(tail)
+  defp _add_up([], acc), do: acc
+  defp _add_up([head|tail], acc), do: _add_up(tail, head + acc)
+  
+  @spec add_up(list()) :: number()
+  def add_up(list), do: _add_up(list, 0)
 
   @spec calc_vat(number(), number()) :: number()
   def calc_vat(total, vat \\ 20), do: vat * total / 100
