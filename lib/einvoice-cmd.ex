@@ -1,20 +1,22 @@
 defmodule Einvoice.CMD do
   import Eutils, only: [to_number: 1, split_line: 1]
   import Einvoice
+  import MultiDef
 
-  def parse_args(args) do
-    options = OptionParser.parse(args, 
+  defp parse_options(args), do: args |> OptionParser.parse(
                                   switches: [help: :boolean, input_file: :string, vat: :float], 
                                   aliases: [h: :help, i: :input_file])
-    case options do
-      {[help: true], _, _} -> :help
-      {[input_file: file], _, _} -> [:read_file, file]
-      {[vat: vat], _, _} -> [:set_vat, vat |> to_number]
-      {_, [amount], _} -> [amount |> to_number, 20.0]
-      {_, [amount, vat], _} -> [amount |> to_number, vat |> to_number]
-      _ -> :help
-    end
+
+  mdef _parse_args do
+    {[help: true], _, _} -> :help
+    {[input_file: file], _, _} -> [:read_file, file]
+    {[vat: vat], _, _} -> [:set_vat, vat |> to_number]
+    {_, [amount], _} -> [amount |> to_number, 20.0]
+    {_, [amount, vat], _} -> [amount |> to_number, vat |> to_number]
+    _ -> :help
   end
+  
+  def parse_args(args), do: args |> parse_options |> _parse_args
 
   defp parse_line([description, unit_price, qty]), do: [description, to_number(unit_price), to_number(qty)]
   defp parse_line([_]), do: [:empty_line, 0, 0]
