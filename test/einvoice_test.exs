@@ -3,14 +3,6 @@ defmodule EinvoiceTest do
 
   import Einvoice
 
-  test "add_up correctly returns zero for empty list" do
-    assert add_up([]) == 0
-  end
-
-  test "add_up correctly returns sum of integer items in non-empty list" do
-    assert add_up([2,3,4,5,6,7]) == 27
-  end
-
   test "calc_vat returns zero for zero amount" do
     assert calc_vat(0) == 0
   end
